@@ -29,11 +29,34 @@
 
 promise_test(async t => {
   const div = addDiv(t);
-  div.style.animation = 'margin100 100s';
+  div.style.animation = 'margin100 1s';
   assert_equals(getComputedStyle(div).marginLeft, '100px');
-  div.style.animation = 'margin50 100s, margin100 100s';
+  div.style.animation = 'margin50 1s, margin100 1s';
   // The margin should be unaffected by margin50 since it is named earlier
   // in the animation list.
   assert_equals(getComputedStyle(div).marginLeft, '100px');
 }, "Animations are composited by their order in the animation-name property.");
+
+promise_test(async t => {
+  const div = addDiv(t);
+  const animA = div.animate({margin: ["100px","100px"]}, 1000);
+  assert_equals(getComputedStyle(div).marginLeft, '100px');
+  div.style.animation = 'margin50 1s';
+  assert_equals(getComputedStyle(div).marginLeft, '100px',
+                "A higher-priority animation is not overriden by a more recent"
+                + " one.");
+}, 'Does not return an animation that has been removed');
+
+promise_test(async t => {
+  const div = addDiv(t);
+  const animA = div.animate({margin: ["100px","100px"]}, 1000);
+  assert_equals(getComputedStyle(div).marginLeft, '100px');
+  div.style.animation = 'margin50 1s';
+  // Wait for animation starts
+  await waitForAnimationFrames(2);
+  assert_equals(getComputedStyle(div).marginLeft, '100px',
+                "A higher-priority animation is not overriden by a more recent"
+                + "one.");
+}, 'Does not return an animation that has been removed once animation starts');
+
 </script>
